@@ -8,13 +8,38 @@ import {
   ImageBackground,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
+import { getAuth, signInAnonymously } from "firebase/auth";
 
 const Start = ({ navigation }) => {
-  const [name, setName] = useState(""); // State for user input
-  const [backgroundColor, setBackgroundColor] = useState("#090C08"); // Default background color
+  // State to store user's input name
+  const [name, setName] = useState("");
+  // State to store selected background color, with a default value
+  const [backgroundColor, setBackgroundColor] = useState("#090C08");
 
-  // Array of background color options
+  // Firebase Authentication instance
+  const auth = getAuth();
+
+  // Anonymous sign-in function for Firebase
+  const signInUser = () => {
+    signInAnonymously(auth)
+      .then((result) => {
+        // Navigate to Chat screen with userID, name, and backgroundColor
+        navigation.navigate("Chat", {
+          userID: result.user.uid, // Firebase User ID
+          name: name || "User", // Use "User" as a fallback if no name is entered
+          backgroundColor, // Pass the selected background color
+        });
+        Alert.alert("Signed in successfully!");
+      })
+      .catch((error) => {
+        console.error("Error during anonymous sign-in:", error);
+        Alert.alert("Unable to sign in. Please try again later.");
+      });
+  };
+
+  // Array of color options for users to choose their preferred background
   const colors = ["#090C08", "#474056", "#8A95A5", "#B9C6AE"];
 
   return (
@@ -23,18 +48,17 @@ const Start = ({ navigation }) => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={styles.container}>
-        {/* Background Image */}
+        {/* Background image for the Start screen */}
         <ImageBackground
-          source={require("../images/Background.png")} // Direct require method
+          source={require("../images/Background.png")}
           style={styles.background}
         >
           <View style={styles.contentContainer}>
-            {/* App Title */}
+            {/* App title */}
             <Text style={styles.title}>Welcome to ChatApp!</Text>
 
-            {/* Input and Options Container */}
+            {/* Input and color selection section */}
             <View style={styles.inputContainer}>
-              {/* TextInput for entering the user's name */}
               <TextInput
                 style={styles.textInput}
                 value={name}
@@ -43,7 +67,6 @@ const Start = ({ navigation }) => {
                 placeholderTextColor="#757083"
               />
 
-              {/* Color Selection Options */}
               <Text style={styles.colorText}>Choose Background Color:</Text>
               <View style={styles.colorContainer}>
                 {colors.map((color) => (
@@ -52,22 +75,17 @@ const Start = ({ navigation }) => {
                     style={[
                       styles.colorOption,
                       { backgroundColor: color },
-                      backgroundColor === color && styles.selectedColor, // Highlight selected color
+                      backgroundColor === color && styles.selectedColor,
                     ]}
-                    onPress={() => setBackgroundColor(color)} // Update selected color
+                    onPress={() => setBackgroundColor(color)}
                   />
                 ))}
               </View>
 
-              {/* Start Chatting Button */}
+              {/* Button to start chatting */}
               <TouchableOpacity
                 style={styles.button}
-                onPress={() =>
-                  navigation.navigate("Chat", {
-                    name: name || "User", // Default name if empty
-                    backgroundColor, // Pass selected color to Chat screen
-                  })
-                }
+                onPress={signInUser}
               >
                 <Text style={styles.buttonText}>Start Chatting</Text>
               </TouchableOpacity>
@@ -79,7 +97,6 @@ const Start = ({ navigation }) => {
   );
 };
 
-/* Stylesheet for Start Component */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -134,11 +151,11 @@ const styles = StyleSheet.create({
   colorOption: {
     width: 50,
     height: 50,
-    borderRadius: 25, // Makes the button circular
+    borderRadius: 25,
   },
   selectedColor: {
     borderWidth: 2,
-    borderColor: "#757083", // Highlights selected color
+    borderColor: "#757083",
   },
   button: {
     backgroundColor: "#757083",

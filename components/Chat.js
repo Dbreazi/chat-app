@@ -5,88 +5,68 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { Bubble, GiftedChat } from "react-native-gifted-chat";
+import { GiftedChat, Bubble } from "react-native-gifted-chat";
+import { collection, query, orderBy, onSnapshot, addDoc } from "firebase/firestore";
 
-/* 
- * Chat Component
- * Displays the user's name in the navigation bar and sets the background
- * color of the screen based on the selection made in the Start screen.
- */
-const Chat = ({ route, navigation }) => {
+const Chat = ({ route, navigation, db }) => {
   // Destructure parameters passed from Start screen
-  const { name, backgroundColor } = route.params;
+  const { userID, name, backgroundColor } = route.params;
 
   // Messages state
   const [messages, setMessages] = useState([]);
 
-  /* 
-   * useEffect Hook
-   * Initializes a default message when the component mounts
-   */
+  // Fetch messages in real-time
   useEffect(() => {
-    navigation.setOptions({ title: name || "Chat" }); // Fallback title if name is empty
+    navigation.setOptions({ title: name || "Chat" }); // Set navigation bar title
+    const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const newMessages = snapshot.docs.map((doc) => ({
+        _id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt.toDate(),
+      }));
+      setMessages(newMessages);
+    });
 
-    // Set default messages
-    setMessages([
-      {
-        _id: 1,
-        text: "Hello developer",
-        createdAt: new Date(),
-        user: {
-          _id: 2,
-          name: "React Native",
-          avatar: "https://placeimg.com/140/140/any",
-        },
-      },
-      {
-        _id: 2,
-        text: "This is a system message",
-        createdAt: new Date(),
-        system: true,
-      },
-    ]);
-  }, [name, navigation]);
+    return () => unsubscribe(); // Cleanup listener on unmount
+  }, [db, name, navigation]);
 
-  /* 
-   * Function to handle sending messages
-   */
+  // Send a new message
   const onSend = (newMessages = []) => {
-    setMessages((previousMessages) =>
-      GiftedChat.append(previousMessages, newMessages)
-    );
+    const messageToSend = {
+      ...newMessages[0],
+      user: { _id: userID, name }, // Attach user ID and name
+    };
+    addDoc(collection(db, "messages"), messageToSend)
+      .then(() => console.log("Message sent successfully"))
+      .catch((error) => console.error("Error adding message: ", error));
   };
 
-  /* 
-   * Function to customize message bubble colors
-   */
-  const renderBubble = (props) => {
-    return (
-      <Bubble
-        {...props}
-        wrapperStyle={{
-          right: {
-            backgroundColor: "#000", // Sender's bubble
-          },
-          left: {
-            backgroundColor: "#FFF", // Receiver's bubble
-          },
-        }}
-      />
-    );
-  };
+  // Customize message bubble colors
+  const renderBubble = (props) => (
+    <Bubble
+      {...props}
+      wrapperStyle={{
+        right: { backgroundColor: "#000" }, // Sender's bubble
+        left: { backgroundColor: "#FFF" }, // Receiver's bubble
+      }}
+    />
+  );
 
-  /* 
-   * Render
-   * Display the Gifted Chat interface with the current messages and onSend handler.
-   */
   return (
-    <View style={[styles.container, { backgroundColor: backgroundColor || "#FFFFFF" }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: backgroundColor || "#FFFFFF" },
+      ]}
+    >
       <GiftedChat
         messages={messages}
-        renderBubble={renderBubble} // Pass custom bubble renderer
+        renderBubble={renderBubble}
         onSend={(messages) => onSend(messages)}
         user={{
-          _id: 1, // The current user's ID
+          _id: userID,
+          name,
         }}
       />
       {Platform.OS === "android" ? <KeyboardAvoidingView behavior="height" /> : null}
@@ -95,14 +75,9 @@ const Chat = ({ route, navigation }) => {
   );
 };
 
-/* 
- * Styles
- * Define the layout and styling for the Chat screen elements.
- * - container: Sets up the background color and full-screen layout.
- */
 const styles = StyleSheet.create({
   container: {
-    flex: 1, // Ensures the container takes up the full screen
+    flex: 1,
   },
 });
 
