@@ -1,44 +1,57 @@
-import React, { useEffect } from "react";
-import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { Alert } from "react-native";
+// import the screens
+import Start from './components/Start';
+import Chat from './components/Chat';
 
-// Import Firebase modules
+// import react Navigation
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+// import firestore connection
 import { initializeApp } from "firebase/app";
 import { getFirestore, disableNetwork, enableNetwork } from "firebase/firestore";
+import { getStorage } from "firebase/storage"; // Firebase Storage import
+import { LogBox, Alert } from 'react-native';
 
-// Import NetInfo
 import { useNetInfo } from "@react-native-community/netinfo";
+import { useEffect } from "react";
 
-// Import screen components
-import Start from "./components/Start";
-import Chat from "./components/Chat";
+// Firebase Authentication persistence
+import { initializeAuth, getReactNativePersistence } from "firebase/auth";
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage for persistence
 
-// Create the stack navigator
+LogBox.ignoreLogs(["AsyncStorage has been extracted from"]);
+
+// Create the navigator
 const Stack = createNativeStackNavigator();
 
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyC_0O3723dommPFPdlUSmrbAelSMtI0wgI",
+  authDomain: "chat-app-e89c5.firebaseapp.com",
+  projectId: "chat-app-e89c5",
+  storageBucket: "chat-app-e89c5.appspot.com",
+  messagingSenderId: "600186927137",
+  appId: "1:600186927137:web:uniqueappid"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+// Initialize Cloud Firestore and Firebase Storage
+const db = getFirestore(app);
+const storage = getStorage(app);  // Initialize Firebase Storage
+
+// Initialize Firebase Auth with persistence
+const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(ReactNativeAsyncStorage) // Set persistence
+});
+
 const App = () => {
-  // Firebase configuration for the project
-  const firebaseConfig = {
-    apiKey: "AIzaSyC_0O3723dommPFPdlUSmrbAelSMtI0wgI",
-    authDomain: "chat-app-e89c5.firebaseapp.com",
-    projectId: "chat-app-e89c5",
-    storageBucket: "chat-app-e89c5.appspot.com",
-    messagingSenderId: "600186927137",
-    appId: "1:600186927137:web:uniqueappid"
-  };
-
-  // Initialize Firebase and Firestore
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  // Use NetInfo to track connectivity
   const connectionStatus = useNetInfo();
 
-  // Effect to handle online/offline states
   useEffect(() => {
     if (connectionStatus.isConnected === false) {
-      Alert.alert("Connection Lost!");
+      Alert.alert("Connection Lost!!");
       disableNetwork(db);
     } else if (connectionStatus.isConnected === true) {
       enableNetwork(db);
@@ -48,18 +61,24 @@ const App = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Start">
-        {/* Start screen where users enter their name and preferences */}
-        <Stack.Screen name="Start" component={Start} />
-        {/* Chat screen with Firestore database and connection status passed as props */}
+        <Stack.Screen
+          name="Start"
+          component={Start}
+        />
         <Stack.Screen
           name="Chat"
-          children={(props) => (
-            <Chat {...props} db={db} isConnected={connectionStatus.isConnected} />
-          )}
-        />
+        >
+          {props => <Chat
+            isConnected={connectionStatus.isConnected}
+            db={db}
+            storage={storage}
+            auth={auth} // Pass the auth object to the Chat component
+            {...props}
+          />}
+        </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
   );
-};
+}
 
 export default App;
