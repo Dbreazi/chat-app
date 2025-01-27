@@ -10,13 +10,13 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "@react-native-async-storage/async-storage": "^1.23.1",
+    "@react-native-async-storage/async-storage": "^1.24.0",
     "@react-native-community/netinfo": "11.4.1",
     "@react-navigation/native": "^7.0.6",
     "@react-navigation/native-stack": "^7.1.7",
     "expo": "~52.0.26",
     "expo-file-system": "~18.0.7",
-    "expo-image-picker": "~16.0.4",
+    "expo-image-picker": "^16.0.4",
     "expo-location": "~18.0.5",
     "expo-status-bar": "~2.0.1",
     "firebase": "^11.2.0",
@@ -28,10 +28,12 @@
     "react-native-reanimated": "~3.16.1",
     "react-native-safe-area-context": "4.12.0",
     "react-native-screens": "~4.4.0",
-    "react-native-vector-icons": "^10.2.0"
+    "react-native-vector-icons": "^10.2.0",
+    "undici": "^6.21.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0"
+    "@babel/compat-data": "^7.26.5",
+    "@babel/core": "^7.26.7"
   },
   "private": true
 }
