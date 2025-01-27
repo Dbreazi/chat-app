@@ -5,7 +5,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
-const CustomActions = ({ wrapperStyle, iconTextStyle, onSend, storage, userID }) => {
+const CustomActions = ({ name, wrapperStyle, iconTextStyle, onSend, storage, userID }) => {
   const actionSheet = useActionSheet();
 
   // Display action sheet with options for sending images or location
@@ -69,7 +69,7 @@ const CustomActions = ({ wrapperStyle, iconTextStyle, onSend, storage, userID })
       if (location) {
         onSend({
           _id: `${new Date().getTime()}-${userID}`,
-          user: { _id: userID, name: "User" },
+          user: { _id: userID, name },
           location: {
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
@@ -101,7 +101,7 @@ const CustomActions = ({ wrapperStyle, iconTextStyle, onSend, storage, userID })
       const imageURL = await getDownloadURL(newUploadRef);
       onSend({
         _id: `${new Date().getTime()}-${userID}`,
-        user: { _id: userID, name: "User" },
+        user: { _id: userID, name }, // Dynamically use the user's actual name
         image: imageURL,
       });
     } catch (error) {

@@ -77,7 +77,7 @@ const Chat = ({ route, navigation, db, storage, isConnected }) => {
 
   // Render custom action buttons (e.g., for sending images or locations)
   const renderCustomActions = (props) => (
-    <CustomActions userID={userID} storage={storage} onSend={(message) => onSend([message])} {...props} />
+    <CustomActions userID={userID} name={name} storage={storage} onSend={(message) => onSend([message])} {...props} />
   );
 
   // Render custom view for messages (e.g., location map view)
